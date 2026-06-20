@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>♡ PURIKURA CAM ♡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   @font-face{
     font-family:'JGaegujaengyi';
@@ -207,7 +210,6 @@
     text-shadow:0 0 3px #fff;
     line-height:1.05;
   }
-  #decoHeart1{ top:2px; right:34%; color:var(--pink-deep); font-size:14px; transform:rotate(15deg); }
   #decoHeart2{ bottom:30%; left:4px; color:var(--pink); font-size:12px; }
   #stageArea{
     position:absolute; inset:0;
@@ -269,6 +271,7 @@
   }
   #frameDeco span{
     color:#fff;
+    font-family:"M PLUS Rounded 1c",sans-serif;
     font-size:11px;
     letter-spacing:2px;
     text-shadow:0 0 4px var(--pink-dark);
@@ -512,7 +515,6 @@
       <div id="brandSide"><b>Super</b> SteadyShot &nbsp; DSC-W130</div>
       <div id="sonyLogo">SONY</div>
       <div class="deco" id="decoFav">Favorite<br>Person</div>
-      <div class="deco" id="decoHeart1">❤</div>
       <div class="deco" id="decoHeart2">♡</div>
     </div>
   </div>
@@ -611,7 +613,7 @@ const WORD_DEFS = [
   { shape:'word', w:150, h:90, text:'LOVE', color:'#ff8fc4', outline:'#ffffff', fontSize:34, glow:'#ffc1e3' },
   { shape:'word', w:200, h:120, text:'Happy\nBirth Day', color:'#3a3a3a', fontSize:22,
     decor:[{ch:'♡',x:0.85,y:0.2,size:18,color:'#ff9bd4'}] },
-  { shape:'word', w:140, h:90, text:'스키♡', color:'#ff8fc4', fontSize:30 },
+  { shape:'word', w:140, h:90, text:'すき♡', color:'#ff8fc4', fontSize:30 },
   { shape:'word', w:160, h:90, text:'おはよう', color:'#3a3a3a', fontSize:26 },
   { shape:'word', w:160, h:90, text:'おやすみ', color:'#3a3a3a', fontSize:26 },
   { shape:'word', w:130, h:100, text:'草', color:'#3a3a3a', fontSize:48 },
@@ -627,7 +629,7 @@ function drawWordSticker(ctx, w, h, def){
   const cx = w/2, cy = h/2;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `900 ${def.fontSize}px "JGaegujaengyi", sans-serif`;
+  ctx.font = `900 ${def.fontSize}px "M PLUS Rounded 1c", sans-serif`;
   const lines = def.text.split('\n');
   const lh = def.fontSize*1.1;
   const startY = cy - (lh*(lines.length-1))/2;
@@ -868,7 +870,13 @@ function sizeCanvases(){
     c.height = rect.height;
   });
 }
-window.addEventListener('resize', sizeCanvases);
+window.addEventListener('resize', ()=>{
+  // 사진을 찍은 뒤에는 절대 다시 사이즈를 맞추면 안 됨 - canvas.width/height에
+  // 값을 대입하면 내용이 즉시 지워지는데, 모바일 브라우저는 주소창이
+  // 보였다 사라질 때도 resize 이벤트를 쏘기 때문에 촬영 후 화면에서
+  // 저장을 누르면 사진/펜 그림이 사라져 있는 버그로 이어졌었음
+  if(!captured) sizeCanvases();
+});
 
 async function startCamera(facing){
   if(stream){ stream.getTracks().forEach(t=>t.stop()); }
@@ -1401,7 +1409,10 @@ startCamera(currentFacing);
 Promise.all([
   document.fonts.load('300 16px "JGaegujaengyi"'),
   document.fonts.load('500 16px "JGaegujaengyi"'),
-  document.fonts.load('700 16px "JGaegujaengyi"')
+  document.fonts.load('700 16px "JGaegujaengyi"'),
+  document.fonts.load('400 16px "M PLUS Rounded 1c"'),
+  document.fonts.load('700 16px "M PLUS Rounded 1c"'),
+  document.fonts.load('900 16px "M PLUS Rounded 1c"')
 ]).then(()=>{ if(stickerCategory==='bubble' || stickerCategory==='word'){ renderStickerRow(); } }).catch(()=>{});
 </script>
 </body>
