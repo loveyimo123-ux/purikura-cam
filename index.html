@@ -34,7 +34,13 @@
     --silver:#f0e6e8;
     --shadow:#8c5660;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  *{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none; /* iOS 길게 누르기 시 복사하기/찾아보기 메뉴(롱프레스 선택) 차단 */
+  }
   html,body{
     margin:0; padding:0; height:100%;
     background:linear-gradient(135deg,#f6e9eb,#e9cdd2 40%,#D8A7B1);
@@ -1124,7 +1130,14 @@ document.querySelectorAll('.modeBtn').forEach(btn=>{
 
 function getPos(e){
   const rect = drawCanvas.getBoundingClientRect();
-  return { x: (e.clientX-rect.left), y:(e.clientY-rect.top) };
+  // 캔버스의 실제 내부 해상도(width/height)와 화면에 보이는 CSS 크기가
+  // 항상 같다고 가정하면 안 됨 - 촬영 후에는 사진/그림을 보존하기 위해
+  // sizeCanvases()를 다시 호출하지 않는데, 모바일 브라우저 주소창이
+  // 사라지면서 화면 높이가 바뀌면 둘이 어긋나서 터치 위치와 실제로
+  // 그려지는 위치 사이에 오프셋(예: "1cm 아래에서 그려짐")이 생김
+  const scaleX = drawCanvas.width / rect.width;
+  const scaleY = drawCanvas.height / rect.height;
+  return { x: (e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
 }
 
 const PEN_WIDTH_PX = 2.65; // ~0.7mm at 96css-px/inch, kept constant per stroke segment
