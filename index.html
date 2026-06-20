@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>♡ PURIKURA CAM ♡</title>
+<style>
+  :root{
+    --pink:#ff7fc1;
+    --pink-deep:#ff4fa3;
+    --pink-pale:#ffd6ec;
+    --pink-dark:#d6347e;
+    --silver:#f0e6ee;
+    --shadow:#a32a6a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:linear-gradient(135deg,#ffe1f1,#ffc1e3 40%,#ff9bd4);
+    font-family:"Segoe UI","Hiragino Maru Gothic Pro","Comic Sans MS",sans-serif;
+    overflow:hidden;
+    touch-action:none;
+  }
+  #app{
+    position:relative;
+    width:100%;
+    max-width:430px;
+    height:100vh;
+    max-height:932px;
+    margin:0 auto;
+    background:linear-gradient(160deg,#ff8fcf,#ff5fb0 60%,#ff3f9e);
+    border-radius:38px;
+    box-shadow:0 0 0 6px #fff8fc, 0 0 0 10px var(--pink-dark), 0 20px 40px rgba(150,20,90,0.45);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    position:relative;
+  }
+  /* sparkle decorations on camera body */
+  #app::before, #app::after{
+    content:"♡";
+    position:absolute;
+    color:#fff7fb;
+    opacity:0.55;
+    font-size:18px;
+    pointer-events:none;
+    z-index:1;
+  }
+  #app::before{ top:10px; left:14px; }
+  #app::after{ top:10px; right:14px; }
+
+  #topbar{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px 4px;
+    z-index:2;
+  }
+  #brand{
+    color:#fff;
+    font-weight:900;
+    font-size:15px;
+    letter-spacing:1px;
+    text-shadow:0 1px 0 var(--shadow), 0 0 8px #fff;
+  }
+  #brand .heart{color:#fff; font-size:13px;}
+  #statusdot{
+    width:9px;height:9px;border-radius:50%;
+    background:#ff2b6b;
+    box-shadow:0 0 6px #ff2b6b;
+    animation:blink 1.4s infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+
+  #screenWrap{
+    flex:1 1 auto;
+    margin:6px 14px;
+    border-radius:22px;
+    background:#000;
+    box-shadow:inset 0 0 0 5px #fff, inset 0 0 0 8px var(--pink-deep), 0 4px 10px rgba(0,0,0,0.3);
+    position:relative;
+    overflow:hidden;
+    z-index:2;
+  }
+  #stageArea{
+    position:absolute; inset:0;
+    overflow:hidden;
+    border-radius:18px;
+  }
+  video, #photoCanvas, #drawCanvas, #stickerLayer{
+    position:absolute;
+    top:0;left:0;
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  video{ filter: brightness(1.12) contrast(0.92) saturate(1.18) blur(0.3px) ; transform:scaleX(1);}
+  video.mirror{ transform:scaleX(-1); }
+  #photoCanvas{ display:none; }
+  #drawCanvas{ touch-action:none; }
+  #stickerLayer{ pointer-events:none; }
+  .sticker{
+    position:absolute;
+    font-size:46px;
+    line-height:1;
+    pointer-events:auto;
+    touch-action:none;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+    transform:translate(-50%,-50%);
+  }
+  .sticker.selected{ outline:2px dashed #fff; border-radius:8px; }
+
+  #glossOverlay{
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.35), transparent 60%);
+    mix-blend-mode:screen;
+    pointer-events:none;
+  }
+  #frameDeco{
+    position:absolute; inset:0;
+    pointer-events:none;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding-bottom:6px;
+  }
+  #frameDeco span{
+    color:#fff;
+    font-size:11px;
+    letter-spacing:2px;
+    text-shadow:0 0 4px #ff3f9e;
+    opacity:0.8;
+  }
+
+  #flash{
+    position:absolute; inset:0; background:#fff; opacity:0;
+    pointer-events:none; z-index:5;
+  }
+  #countdown{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    font-size:90px;
+    font-weight:900;
+    color:#fff;
+    text-shadow:0 0 20px #ff3f9e, 0 4px 0 var(--shadow);
+    z-index:6;
+  }
+
+  /* lens deco top of camera (like a real purikura booth lens) */
+  #lensDeco{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:26px; height:26px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #cdf, #335 60%, #001);
+    box-shadow:0 0 0 4px #fff, 0 0 0 6px var(--pink-deep);
+    z-index:3;
+  }
+
+  #toolbar{
+    flex:0 0 auto;
+    z-index:2;
+    padding:8px 14px 4px;
+  }
+  #colorRow{
+    display:flex;
+    gap:6px;
+    justify-content:center;
+    padding:6px 4px;
+    background:rgba(255,255,255,0.55);
+    border-radius:14px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .colorSwatch{
+    width:22px;height:22px;border-radius:50%;
+    border:2px solid #fff;
+    box-shadow:0 0 4px rgba(0,0,0,0.3);
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .colorSwatch.active{
+    box-shadow:0 0 0 2px #fff, 0 0 0 4px #ff2b6b;
+    transform:scale(1.15);
+  }
+
+  #stickerTabs{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:6px;
+  }
+  .stickerTabBtn{
+    background:rgba(255,255,255,0.45);
+    border:none;
+    color:var(--pink-dark);
+    font-weight:700;
+    font-size:11px;
+    padding:4px 14px;
+    border-radius:16px;
+  }
+  .stickerTabBtn.active{
+    background:#fff;
+    color:#ff2b6b;
+    box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+  #stickerRow{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:4px 2px 8px;
+  }
+  .stickerBtn{
+    flex:0 0 auto;
+    font-size:26px;
+    background:rgba(255,255,255,0.6);
+    border:none;
+    border-radius:10px;
+    padding:4px 6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .stickerBtn img{
+    width:38px;
+    height:auto;
+    display:block;
+  }
+  .bubbleSticker{
+    width:130px;
+    height:auto;
+  }
+
+  #modeRow{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .modeBtn{
+    background:rgba(255,255,255,0.5);
+    border:none;
+    color:var(--pink-dark);
+    font-weight:700;
+    font-size:11px;
+    padding:5px 12px;
+    border-radius:20px;
+    letter-spacing:0.5px;
+  }
+  .modeBtn.active{
+    background:#fff;
+    color:#ff2b6b;
+    box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  #controls{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:6px 26px 22px;
+    z-index:2;
+  }
+  .ctrlBtn{
+    width:48px; height:48px;
+    border-radius:50%;
+    background:linear-gradient(160deg,#fff,#ffd6ec);
+    border:2px solid #fff;
+    box-shadow:0 3px 6px rgba(150,20,90,0.4);
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--pink-dark);
+  }
+  #shutterBtn{
+    width:74px; height:74px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, #ff8fcf 60%, #ff3f9e);
+    border:4px solid #fff;
+    box-shadow:0 0 0 3px var(--pink-deep), 0 6px 10px rgba(150,20,90,0.5);
+  }
+  #shutterBtn:active{ transform:scale(0.92); }
+  #saveBtn{
+    font-size:22px;
+  }
+
+  #resultOverlay{
+    position:absolute; inset:0;
+    background:rgba(255,200,230,0.92);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:10;
+    padding:16px;
+    gap:12px;
+  }
+  #resultOverlay img{
+    max-width:88%;
+    border-radius:14px;
+    border:5px solid #fff;
+    box-shadow:0 6px 16px rgba(150,20,90,0.5);
+  }
+  #resultOverlay .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .pillBtn{
+    background:#fff;
+    color:var(--pink-dark);
+    border:none;
+    font-weight:800;
+    padding:10px 18px;
+    border-radius:24px;
+    box-shadow:0 3px 6px rgba(150,20,90,0.4);
+    font-size:13px;
+  }
+  #resultOverlay .privacyNote{
+    color:#fff;
+    font-size:10px;
+    text-shadow:0 0 4px var(--shadow);
+    opacity:0.9;
+    text-align:center;
+  }
+  #hint{
+    position:absolute; bottom:8px; left:0; right:0;
+    text-align:center;
+    color:#fff;
+    font-size:10px;
+    opacity:0.75;
+    z-index:2;
+    text-shadow:0 0 4px var(--shadow);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="lensDeco"></div>
+  <div id="topbar">
+    <div id="brand"><span class="heart">♡</span> PURIKURA CAM <span class="heart">♡</span></div>
+    <div id="statusdot"></div>
+  </div>
+
+  <div id="screenWrap">
+    <div id="stageArea">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="photoCanvas"></canvas>
+      <canvas id="drawCanvas"></canvas>
+      <div id="stickerLayer"></div>
+      <div id="glossOverlay"></div>
+    </div>
+    <div id="frameDeco"><span>キラキラ♡かわいい</span></div>
+    <div id="flash"></div>
+    <div id="countdown">3</div>
+  </div>
+
+  <div id="toolbar">
+    <div id="modeRow">
+      <button class="modeBtn active" data-mode="none">📷 카메라</button>
+      <button class="modeBtn" data-mode="pen">✎ 글리터펜</button>
+      <button class="modeBtn" data-mode="sticker">★ 스티커</button>
+    </div>
+    <div id="colorRow"></div>
+    <div id="stickerTabs">
+      <button class="stickerTabBtn active" data-cat="emoji">이모지</button>
+      <button class="stickerTabBtn" data-cat="bubble">말풍선</button>
+    </div>
+    <div id="stickerRow"></div>
+  </div>
+
+  <div id="controls">
+    <button class="ctrlBtn" id="flipBtn" title="카메라 전환">🔄</button>
+    <button id="shutterBtn"></button>
+    <button class="ctrlBtn" id="saveBtn" title="완성">💾</button>
+  </div>
+
+  <div id="hint">사진을 찍고 글리터펜과 스티커로 꾸며보세요 ♡ (사진은 서버에 저장되지 않아요)</div>
+
+  <div id="resultOverlay">
+    <img id="resultImg" alt="result"/>
+    <div class="row">
+      <button class="pillBtn" id="retakeBtn">↺ 다시 찍기</button>
+      <button class="pillBtn" id="decorateMoreBtn">✎ 꾸미기</button>
+      <button class="pillBtn" id="downloadBtn">💾 다운로드</button>
+    </div>
+    <div class="privacyNote">이 사진은 기기에서만 처리되며 서버/DB에 저장되지 않아요 ♡</div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const photoCanvas = document.getElementById('photoCanvas');
+const drawCanvas = document.getElementById('drawCanvas');
+const stickerLayer = document.getElementById('stickerLayer');
+const stageArea = document.getElementById('stageArea');
+const flashEl = document.getElementById('flash');
+const countdownEl = document.getElementById('countdown');
+const resultOverlay = document.getElementById('resultOverlay');
+const resultImg = document.getElementById('resultImg');
+
+let currentFacing = 'user';
+let stream = null;
+let captured = false; // true after a photo is taken (frozen frame shown)
+let drawCtx = drawCanvas.getContext('2d');
+let mode = 'none';
+let penColor = '#ff5ec4';
+let drawing = false;
+let lastX=0,lastY=0;
+
+const GLITTER_COLORS = [
+  '#ff5ec4','#ff85a2','#ffd23f','#7CFC00','#39ff14',
+  '#00e5ff','#1e90ff','#b388ff','#ff6ec7','#ff3131',
+  '#fffb00','#ff9100'
+];
+
+const EMOJI_STICKERS = ['♡','★','✨','🎀','👑','💕','🌟','🐰','🍓','💋','🦋','🌈'];
+
+// 말풍선 스티커: 첨부 레퍼런스(갸루 다이어리 스타일)를 참고한 텍스트 말풍선 모음
+const BUBBLE_DEFS = [
+  { shape:'oval', w:200, h:160, fill:'#fffafd', stroke:'#d9a9c9', strokeW:4,
+    text:'오늘\n코디\n좀\n괜찮은 듯\n..\n☆', color:'#c98ab0', fontSize:16 },
+  { shape:'cloud', w:220, h:150, fill:'#ffffff',
+    text:'나 지금\n완전 공주', color:'#d6347e', fontSize:18, bow:true },
+  { shape:'rect', w:160, h:160, fill:'#ffe1ef', stroke:'#ff9bd4', strokeW:3, radius:14,
+    text:'매우\n귀여운\n★*·°:°·*☆', color:'#b5467e', fontSize:15 },
+  { shape:'speech', w:210, h:130, fill:'#ffffff', stroke:'#333333', strokeW:3,
+    text:'귀♡여워.·☆*.', color:'#2a2a2a', fontSize:18 },
+  { shape:'pixelRect', w:200, h:120, fill:'#ff5ec4',
+    text:'모늘의 룩\n입니다☆', color:'#ffffff', fontSize:16 },
+  { shape:'flower', w:190, h:190, fill:'#fffafd', stroke:'#ffb6da', strokeW:3,
+    text:'오늘 코디\n100점.', color:'#d6347e', fontSize:17 },
+  { shape:'banner', w:240, h:90, fill:'#ff7fc1', stroke:'#ffffff', strokeW:3,
+    text:'소녀가 돼..♡', color:'#ffffff', fontSize:19 }
+];
+
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawCloudShape(ctx,w,h,def){
+  const bumps = [
+    {x:w*0.30,y:h*0.55,r:w*0.22},
+    {x:w*0.50,y:h*0.40,r:w*0.26},
+    {x:w*0.70,y:h*0.55,r:w*0.22},
+    {x:w*0.40,y:h*0.62,r:w*0.20},
+    {x:w*0.62,y:h*0.62,r:w*0.20}
+  ];
+  ctx.fillStyle = def.fill;
+  ctx.beginPath();
+  bumps.forEach(b=>{ ctx.moveTo(b.x+b.r,b.y); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); });
+  ctx.fill();
+  if(def.bow){
+    // small ribbon/bow at top
+    ctx.fillStyle = '#ff5ec4';
+    ctx.beginPath();
+    ctx.moveTo(w*0.5,h*0.18);
+    ctx.lineTo(w*0.38,h*0.06);
+    ctx.lineTo(w*0.46,h*0.20);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(w*0.5,h*0.18);
+    ctx.lineTo(w*0.62,h*0.06);
+    ctx.lineTo(w*0.54,h*0.20);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w*0.5,h*0.18,6,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawSpeechShape(ctx,w,h,def){
+  ctx.fillStyle = def.fill;
+  ctx.beginPath();
+  ctx.ellipse(w/2,h*0.42,w/2-6,h*0.40,0,0,Math.PI*2);
+  ctx.fill();
+  // tail
+  ctx.beginPath();
+  ctx.moveTo(w*0.42,h*0.74);
+  ctx.lineTo(w*0.36,h*0.95);
+  ctx.lineTo(w*0.54,h*0.78);
+  ctx.closePath();
+  ctx.fill();
+  if(def.stroke){
+    ctx.lineWidth = def.strokeW||2;
+    ctx.strokeStyle = def.stroke;
+    ctx.beginPath();
+    ctx.ellipse(w/2,h*0.42,w/2-6,h*0.40,0,0,Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+function drawPixelRectShape(ctx,w,h,def){
+  const step = 8;
+  ctx.fillStyle = def.fill;
+  ctx.fillRect(step,step,w-step*2,h-step*2-14);
+  // stepped/pixel border
+  for(let i=0;i<w;i+=step){
+    ctx.fillRect(i,0,step-1,step-1);
+    ctx.fillRect(i,h-step-14,step-1,step-1);
+  }
+  for(let j=0;j<h-14;j+=step){
+    ctx.fillRect(0,j,step-1,step-1);
+    ctx.fillRect(w-step,j,step-1,step-1);
+  }
+  // tail
+  ctx.fillRect(w*0.30,h-14,step,8);
+  ctx.fillRect(w*0.30+step,h-6,step,6);
+}
+
+function drawFlowerShape(ctx,w,h,def){
+  const cx=w/2, cy=h/2, petalR=w*0.22, dist=w*0.26;
+  ctx.fillStyle = def.fill;
+  for(let i=0;i<7;i++){
+    const ang = (Math.PI*2/7)*i;
+    const px = cx+Math.cos(ang)*dist, py=cy+Math.sin(ang)*dist;
+    ctx.beginPath();
+    ctx.arc(px,py,petalR,0,Math.PI*2);
+    ctx.fill();
+  }
+  if(def.stroke){
+    ctx.lineWidth = def.strokeW||2;
+    ctx.strokeStyle = def.stroke;
+    for(let i=0;i<7;i++){
+      const ang = (Math.PI*2/7)*i;
+      const px = cx+Math.cos(ang)*dist, py=cy+Math.sin(ang)*dist;
+      ctx.beginPath();
+      ctx.arc(px,py,petalR,0,Math.PI*2);
+      ctx.stroke();
+    }
+  }
+  ctx.beginPath();
+  ctx.arc(cx,cy,w*0.30,0,Math.PI*2);
+  ctx.fillStyle = def.fill;
+  ctx.fill();
+  if(def.stroke){ ctx.stroke(); }
+}
+
+function drawBannerShape(ctx,w,h,def){
+  roundRectPath(ctx,4,4,w-8,h-8,12);
+  ctx.fillStyle = def.fill;
+  ctx.fill();
+  ctx.setLineDash([6,5]);
+  ctx.lineWidth = def.strokeW||2;
+  ctx.strokeStyle = def.stroke||'#fff';
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // little dot accents
+  ctx.fillStyle = def.stroke||'#fff';
+  ctx.beginPath(); ctx.arc(16,h/2,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(w-16,h/2,3,0,Math.PI*2); ctx.fill();
+}
+
+function makeStickerCanvas(def){
+  const dpr = 2;
+  const cv = document.createElement('canvas');
+  cv.width = def.w*dpr; cv.height = def.h*dpr;
+  cv.style.width = def.w+'px'; cv.style.height = def.h+'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const w=def.w, h=def.h;
+  ctx.save();
+  switch(def.shape){
+    case 'oval':
+      ctx.beginPath();
+      ctx.ellipse(w/2,h/2,w/2-6,h/2-6,0,0,Math.PI*2);
+      ctx.fillStyle = def.fill; ctx.fill();
+      ctx.lineWidth = def.strokeW||3; ctx.strokeStyle = def.stroke||'#000';
+      ctx.stroke();
+      break;
+    case 'cloud':
+      drawCloudShape(ctx,w,h,def);
+      break;
+    case 'rect':
+      roundRectPath(ctx,4,4,w-8,h-8,def.radius||16);
+      ctx.fillStyle = def.fill; ctx.fill();
+      if(def.stroke){ ctx.lineWidth=def.strokeW||2; ctx.strokeStyle=def.stroke; ctx.stroke(); }
+      break;
+    case 'speech':
+      drawSpeechShape(ctx,w,h,def);
+      break;
+    case 'pixelRect':
+      drawPixelRectShape(ctx,w,h,def);
+      break;
+    case 'flower':
+      drawFlowerShape(ctx,w,h,def);
+      break;
+    case 'banner':
+      drawBannerShape(ctx,w,h,def);
+      break;
+  }
+  ctx.restore();
+
+  ctx.fillStyle = def.color || '#333';
+  ctx.font = `bold ${def.fontSize||16}px "Malgun Gothic","Apple SD Gothic Neo",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = def.text.split('\n');
+  const lh = (def.fontSize||16)*1.25;
+  const startY = h/2 - (lh*(lines.length-1))/2 - (def.shape==='speech'?8:0);
+  lines.forEach((line,i)=> ctx.fillText(line, w/2, startY+i*lh));
+  return cv;
+}
+
+function sizeCanvases(){
+  const rect = stageArea.getBoundingClientRect();
+  [photoCanvas, drawCanvas].forEach(c=>{
+    c.width = rect.width;
+    c.height = rect.height;
+  });
+}
+window.addEventListener('resize', sizeCanvases);
+
+async function startCamera(facing){
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: facing, width:{ideal:1080}, height:{ideal:1440} },
+      audio:false
+    });
+    video.srcObject = stream;
+    video.classList.toggle('mirror', facing==='user');
+  }catch(e){
+    alert('카메라 접근에 실패했어요: ' + e.message);
+  }
+}
+
+function buildColorRow(){
+  const row = document.getElementById('colorRow');
+  GLITTER_COLORS.forEach((c,i)=>{
+    const sw = document.createElement('div');
+    sw.className='colorSwatch'+(i===0?' active':'');
+    sw.style.background = c;
+    sw.style.boxShadow = sw.style.boxShadow + `, 0 0 6px ${c}`;
+    sw.addEventListener('click', ()=>{
+      document.querySelectorAll('.colorSwatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+      penColor = c;
+    });
+    row.appendChild(sw);
+  });
+}
+
+let stickerCategory = 'emoji';
+
+function buildStickerRow(){
+  renderStickerRow();
+  document.querySelectorAll('.stickerTabBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.stickerTabBtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      stickerCategory = btn.dataset.cat;
+      renderStickerRow();
+    });
+  });
+}
+
+function renderStickerRow(){
+  const row = document.getElementById('stickerRow');
+  row.innerHTML='';
+  if(stickerCategory==='emoji'){
+    EMOJI_STICKERS.forEach(s=>{
+      const btn = document.createElement('button');
+      btn.className='stickerBtn';
+      btn.textContent = s;
+      btn.addEventListener('click', ()=> addEmojiSticker(s));
+      row.appendChild(btn);
+    });
+  } else {
+    BUBBLE_DEFS.forEach(def=>{
+      const btn = document.createElement('button');
+      btn.className='stickerBtn';
+      const thumb = makeStickerCanvas(def);
+      const img = document.createElement('img');
+      img.src = thumb.toDataURL();
+      btn.appendChild(img);
+      btn.addEventListener('click', ()=> addBubbleSticker(def));
+      row.appendChild(btn);
+    });
+  }
+}
+
+function addEmojiSticker(char){
+  const el = document.createElement('div');
+  el.className='sticker';
+  el.textContent = char;
+  const rect = stageArea.getBoundingClientRect();
+  el.style.left = (rect.width/2)+'px';
+  el.style.top = (rect.height/2)+'px';
+  stickerLayer.appendChild(el);
+  makeStickerDraggable(el);
+  selectSticker(el);
+}
+
+function addBubbleSticker(def){
+  const cv = makeStickerCanvas(def);
+  const el = document.createElement('img');
+  el.className = 'sticker bubbleSticker';
+  el.src = cv.toDataURL();
+  el.draggable = false;
+  el._srcCanvas = cv;
+  const rect = stageArea.getBoundingClientRect();
+  el.style.left = (rect.width/2)+'px';
+  el.style.top = (rect.height/2)+'px';
+  stickerLayer.appendChild(el);
+  makeStickerDraggable(el);
+  selectSticker(el);
+}
+
+let selectedSticker = null;
+function selectSticker(el){
+  if(selectedSticker) selectedSticker.classList.remove('selected');
+  selectedSticker = el;
+  el.classList.add('selected');
+}
+
+function makeStickerDraggable(el){
+  let startX, startY, origX, origY;
+  let pinchStartDist=0, startScale=1;
+  let activePointers = {};
+
+  el.addEventListener('pointerdown', (e)=>{
+    e.stopPropagation();
+    selectSticker(el);
+    el.setPointerCapture(e.pointerId);
+    activePointers[e.pointerId] = {x:e.clientX,y:e.clientY};
+    const ids = Object.keys(activePointers);
+    if(ids.length===1){
+      startX=e.clientX; startY=e.clientY;
+      const style = getComputedStyle(el);
+      origX = parseFloat(el.style.left);
+      origY = parseFloat(el.style.top);
+    }
+  });
+  el.addEventListener('pointermove',(e)=>{
+    if(!activePointers[e.pointerId]) return;
+    activePointers[e.pointerId] = {x:e.clientX,y:e.clientY};
+    const ids = Object.keys(activePointers);
+    if(ids.length===1){
+      const dx = e.clientX-startX, dy=e.clientY-startY;
+      el.style.left = (origX+dx)+'px';
+      el.style.top = (origY+dy)+'px';
+    }
+  });
+  function release(e){
+    delete activePointers[e.pointerId];
+  }
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+
+  // double-tap to delete
+  let lastTap=0;
+  el.addEventListener('pointerdown', ()=>{
+    const now=Date.now();
+    if(now-lastTap<300){ el.remove(); if(selectedSticker===el) selectedSticker=null; }
+    lastTap=now;
+  });
+
+  // simple pinch-to-scale & rotate via wheel fallback not needed; add buttons instead
+}
+
+document.querySelectorAll('.modeBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.modeBtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    drawCanvas.style.pointerEvents = (mode==='pen') ? 'auto':'none';
+    stickerLayer.style.pointerEvents = (mode==='sticker') ? 'auto':'none';
+  });
+});
+
+function getPos(e){
+  const rect = drawCanvas.getBoundingClientRect();
+  return { x: (e.clientX-rect.left), y:(e.clientY-rect.top) };
+}
+
+drawCanvas.addEventListener('pointerdown', (e)=>{
+  if(mode!=='pen') return;
+  drawing = true;
+  const p = getPos(e);
+  lastX=p.x; lastY=p.y;
+  drawCtx.beginPath();
+  drawCtx.moveTo(lastX,lastY);
+});
+drawCanvas.addEventListener('pointermove',(e)=>{
+  if(!drawing || mode!=='pen') return;
+  const p = getPos(e);
+  drawCtx.strokeStyle = penColor;
+  drawCtx.lineWidth = 9;
+  drawCtx.lineCap='round';
+  drawCtx.lineJoin='round';
+  drawCtx.shadowColor = penColor;
+  drawCtx.shadowBlur = 14;
+  drawCtx.globalAlpha = 0.9;
+  drawCtx.lineTo(p.x,p.y);
+  drawCtx.stroke();
+  lastX=p.x; lastY=p.y;
+});
+window.addEventListener('pointerup', ()=>{ drawing=false; });
+
+const flipBtn = document.getElementById('flipBtn');
+const shutterBtn = document.getElementById('shutterBtn');
+
+function flipCamera(){
+  currentFacing = (currentFacing==='user') ? 'environment' : 'user';
+  startCamera(currentFacing);
+}
+
+flipBtn.addEventListener('click', ()=>{
+  if(captured){ resetStage(); } else { flipCamera(); }
+});
+
+function updateControlsForCaptured(){
+  if(captured){
+    flipBtn.textContent = '↺';
+    flipBtn.title = '다시 찍기';
+    shutterBtn.style.visibility = 'hidden';
+  } else {
+    flipBtn.textContent = '🔄';
+    flipBtn.title = '카메라 전환';
+    shutterBtn.style.visibility = 'visible';
+  }
+}
+
+shutterBtn.addEventListener('click', async ()=>{
+  await runCountdown(3);
+  takePhoto();
+  updateControlsForCaptured();
+});
+
+function runCountdown(n){
+  return new Promise(resolve=>{
+    countdownEl.style.display='flex';
+    let count=n;
+    countdownEl.textContent=count;
+    const iv = setInterval(()=>{
+      count--;
+      if(count<=0){
+        clearInterval(iv);
+        countdownEl.style.display='none';
+        resolve();
+      } else {
+        countdownEl.textContent=count;
+      }
+    },700);
+  });
+}
+
+function takePhoto(){
+  sizeCanvases();
+  const ctx = photoCanvas.getContext('2d');
+  const w = photoCanvas.width, h = photoCanvas.height;
+
+  // draw video frame (account for mirror + cover fit)
+  ctx.save();
+  if(currentFacing==='user'){
+    ctx.translate(w,0);
+    ctx.scale(-1,1);
+  }
+  // cover-fit calculation
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const scale = Math.max(w/vw, h/vh);
+  const dw = vw*scale, dh = vh*scale;
+  const dx = (w-dw)/2, dy=(h-dh)/2;
+  ctx.drawImage(video, dx, dy, dw, dh);
+  ctx.restore();
+
+  // soft glow / bokeh filter (뽀샤시 효과)
+  ctx.save();
+  ctx.globalCompositeOperation='screen';
+  ctx.filter='blur(8px)';
+  ctx.globalAlpha=0.35;
+  ctx.drawImage(photoCanvas,0,0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation='lighten';
+  const grad = ctx.createRadialGradient(w*0.3,h*0.2,10,w*0.3,h*0.2,w*0.9);
+  grad.addColorStop(0,'rgba(255,255,255,0.35)');
+  grad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+
+  // pink warm tint
+  ctx.save();
+  ctx.globalCompositeOperation='overlay';
+  ctx.fillStyle='rgba(255,170,210,0.18)';
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+
+  // flash effect
+  flashEl.style.transition='none';
+  flashEl.style.opacity='0.9';
+  requestAnimationFrame(()=>{
+    flashEl.style.transition='opacity 0.4s';
+    flashEl.style.opacity='0';
+  });
+
+  video.style.display='none';
+  photoCanvas.style.display='block';
+  captured = true;
+}
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  if(!captured){ alert('먼저 사진을 찍어주세요 ♡'); return; }
+  finalizeImage();
+});
+
+function finalizeImage(){
+  sizeCanvases();
+  const w = photoCanvas.width, h = photoCanvas.height;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+
+  octx.drawImage(photoCanvas,0,0,w,h);
+  octx.drawImage(drawCanvas,0,0,w,h);
+
+  // draw stickers (emoji text + bubble images)
+  const stageRect = stageArea.getBoundingClientRect();
+  const scaleX = w/stageRect.width, scaleY = h/stageRect.height;
+  document.querySelectorAll('.sticker').forEach(el=>{
+    const x = parseFloat(el.style.left)*scaleX;
+    const y = parseFloat(el.style.top)*scaleY;
+    if(el.tagName === 'IMG' && el._srcCanvas){
+      const dispW = el.offsetWidth || parseFloat(getComputedStyle(el).width);
+      const dispH = el.offsetHeight || (dispW * el._srcCanvas.height/el._srcCanvas.width);
+      const dw = dispW*scaleX, dh = dispH*scaleY;
+      octx.drawImage(el._srcCanvas, x-dw/2, y-dh/2, dw, dh);
+    } else {
+      octx.save();
+      octx.font = (46*Math.min(scaleX,scaleY))+'px sans-serif';
+      octx.textAlign='center';
+      octx.textBaseline='middle';
+      octx.fillText(el.textContent, x, y);
+      octx.restore();
+    }
+  });
+
+  // bottom caption deco
+  octx.save();
+  octx.font = 'bold '+(Math.round(w*0.045))+'px sans-serif';
+  octx.fillStyle='rgba(255,255,255,0.85)';
+  octx.textAlign='center';
+  octx.shadowColor='#ff3f9e';
+  octx.shadowBlur=6;
+  octx.fillText('♡ PURIKURA CAM ♡', w/2, h-18);
+  octx.restore();
+
+  resultImg.src = out.toDataURL('image/png');
+  resultOverlay.style.display='flex';
+}
+
+document.getElementById('retakeBtn').addEventListener('click', ()=>{
+  resultOverlay.style.display='none';
+  resetStage();
+});
+
+document.getElementById('decorateMoreBtn').addEventListener('click', ()=>{
+  // 결과 화면을 닫고 스테이지로 돌아가 그림/스티커를 계속 꾸밀 수 있게 함 (사진은 그대로 유지)
+  resultOverlay.style.display='none';
+});
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const a = document.createElement('a');
+  a.href = resultImg.src;
+  a.download = 'purikura_' + Date.now() + '.png';
+  a.click();
+});
+
+function resetStage(){
+  video.style.display='block';
+  photoCanvas.style.display='none';
+  captured=false;
+  drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  stickerLayer.innerHTML='';
+  selectedSticker=null;
+  updateControlsForCaptured();
+}
+
+buildColorRow();
+buildStickerRow();
+sizeCanvases();
+updateControlsForCaptured();
+startCamera(currentFacing);
+</script>
+</body>
+</html>
