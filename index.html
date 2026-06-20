@@ -1131,12 +1131,14 @@ const PEN_WIDTH_PX = 2.65; // ~0.7mm at 96css-px/inch, kept constant per stroke 
 
 drawCanvas.addEventListener('pointerdown', (e)=>{
   if(!captured || mode!=='pen') return;
+  e.preventDefault();
   drawing = true;
   const p = getPos(e);
   lastX=p.x; lastY=p.y;
 });
 drawCanvas.addEventListener('pointermove',(e)=>{
   if(!drawing || !captured || mode!=='pen') return;
+  e.preventDefault();
   const p = getPos(e);
   // draw each segment as its own path so repeated stroke() calls don't
   // re-render (and visually thicken/glow) the segments already drawn
@@ -1347,6 +1349,11 @@ buildStickerRow();
 sizeCanvases();
 updateControlsForCaptured();
 startCamera(currentFacing);
+
+// 펜으로 그릴 때 데스크톱 브라우저에서 텍스트/이미지 드래그 선택이
+// 같이 일어나는 걸 막기 위한 안전장치
+document.addEventListener('selectstart', (e)=>{ if(mode==='pen' && captured) e.preventDefault(); });
+document.addEventListener('dragstart', (e)=>{ if(mode==='pen' && captured) e.preventDefault(); });
 
 // 폰트가 늦게 로드되면 말풍선 스티커 캔버스가 기본 글꼴로 그려지므로,
 // 웹폰트 로드가 끝나면 말풍선 썸네일을 다시 그려준다
