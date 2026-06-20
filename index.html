@@ -1011,8 +1011,9 @@ const stickerTabsEl = document.getElementById('stickerTabs');
 const stickerRowEl = document.getElementById('stickerRow');
 
 function applyModeUI(){
-  drawCanvas.style.pointerEvents = (mode==='pen') ? 'auto':'none';
-  stickerLayer.style.pointerEvents = (mode==='sticker') ? 'auto':'none';
+  // 사진을 찍기 전(첫 화면)에는 펜/스티커 레이어가 항상 비활성화되어야 함
+  drawCanvas.style.pointerEvents = (captured && mode==='pen') ? 'auto':'none';
+  stickerLayer.style.pointerEvents = (captured && mode==='sticker') ? 'auto':'none';
   colorRowEl.classList.toggle('shown', mode==='pen');
   stickerTabsEl.classList.toggle('shown', mode==='sticker');
   stickerRowEl.classList.toggle('shown', mode==='sticker');
@@ -1037,13 +1038,13 @@ function getPos(e){
 const PEN_WIDTH_PX = 2.65; // ~0.7mm at 96css-px/inch, kept constant per stroke segment
 
 drawCanvas.addEventListener('pointerdown', (e)=>{
-  if(mode!=='pen') return;
+  if(!captured || mode!=='pen') return;
   drawing = true;
   const p = getPos(e);
   lastX=p.x; lastY=p.y;
 });
 drawCanvas.addEventListener('pointermove',(e)=>{
-  if(!drawing || mode!=='pen') return;
+  if(!drawing || !captured || mode!=='pen') return;
   const p = getPos(e);
   // draw each segment as its own path so repeated stroke() calls don't
   // re-render (and visually thicken/glow) the segments already drawn
