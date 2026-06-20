@@ -526,6 +526,7 @@
     <div id="stickerTabs">
       <button class="stickerTabBtn active" data-cat="emoji">이모지</button>
       <button class="stickerTabBtn" data-cat="bubble">말풍선</button>
+      <button class="stickerTabBtn" data-cat="word">워드</button>
     </div>
     <div id="stickerRow"></div>
   </div>
@@ -595,6 +596,71 @@ const BUBBLE_DEFS = [
   { shape:'banner', w:240, h:90, fill:'#ff7fc1', stroke:'#ffffff', strokeW:3,
     text:'소녀가 돼..♡', color:'#ffffff', fontSize:26 }
 ];
+
+// 워드 스티커: 첨부 레퍼런스(말풍선 손글씨 단어 도장) 참고 - 분홍 글로우 + 검정/하양/분홍 글자
+const WORD_DEFS = [
+  { shape:'word', w:170, h:90, text:'それな', color:'#ffffff', fontSize:34,
+    decor:[{ch:'♡',x:0.85,y:0.18,size:14,color:'#ff9bd4'}] },
+  { shape:'word', w:190, h:90, text:'ありがとう', color:'#ffffff', fontSize:28,
+    decor:[{ch:'♡',x:0.12,y:0.18,size:12,color:'#ff9bd4'}] },
+  { shape:'word', w:170, h:90, text:'かわいい', color:'#ff8fc4', outline:'#ffffff', fontSize:30,
+    decor:[{ch:'♡',x:0.88,y:0.8,size:14,color:'#ff9bd4'}] },
+  { shape:'word', w:170, h:90, text:'しあわせ', color:'#3a3a3a', fontSize:28,
+    decor:[{ch:'♡',x:0.85,y:0.2,size:12,color:'#ff9bd4'}] },
+  { shape:'word', w:150, h:100, text:'最高', color:'#3a3a3a', fontSize:42 },
+  { shape:'word', w:150, h:90, text:'LOVE', color:'#ff8fc4', outline:'#ffffff', fontSize:34, glow:'#ffc1e3' },
+  { shape:'word', w:200, h:120, text:'Happy\nBirth Day', color:'#3a3a3a', fontSize:22,
+    decor:[{ch:'♡',x:0.85,y:0.2,size:18,color:'#ff9bd4'}] },
+  { shape:'word', w:140, h:90, text:'스키♡', color:'#ff8fc4', fontSize:30 },
+  { shape:'word', w:160, h:90, text:'おはよう', color:'#3a3a3a', fontSize:26 },
+  { shape:'word', w:160, h:90, text:'おやすみ', color:'#3a3a3a', fontSize:26 },
+  { shape:'word', w:130, h:100, text:'草', color:'#3a3a3a', fontSize:48 },
+  { shape:'word', w:130, h:90, text:'OK', color:'#ffffff', outline:'#ff8fc4', fontSize:40 },
+  { shape:'word', w:160, h:90, text:'ぴえん', color:'#9a9a9a', fontSize:28 },
+  { shape:'word', w:170, h:90, text:'おめでとう', color:'#ffffff', fontSize:24,
+    decor:[{ch:'♡',x:0.88,y:0.2,size:12,color:'#ff9bd4'}] },
+  { shape:'word', w:160, h:90, text:'ごめんね', color:'#3a3a3a', fontSize:26 },
+  { shape:'word', w:170, h:90, text:'ByeBye', color:'#ff8fc4', outline:'#ffffff', fontSize:30 }
+];
+
+function drawWordSticker(ctx, w, h, def){
+  const cx = w/2, cy = h/2;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `900 ${def.fontSize}px "JGaegujaengyi", sans-serif`;
+  const lines = def.text.split('\n');
+  const lh = def.fontSize*1.1;
+  const startY = cy - (lh*(lines.length-1))/2;
+
+  // 분홍 글로우 (여러 번 겹쳐서 부드럽게)
+  ctx.save();
+  ctx.shadowColor = def.glow || '#ff8fc4';
+  ctx.shadowBlur = def.fontSize*0.55;
+  ctx.fillStyle = def.color;
+  for(let i=0;i<3;i++){
+    lines.forEach((line,i2)=> ctx.fillText(line, cx, startY+i2*lh));
+  }
+  ctx.restore();
+
+  // 선명한 본체 글자 (테두리 + 채우기)
+  ctx.save();
+  ctx.lineWidth = Math.max(1.5, def.fontSize*0.05);
+  ctx.strokeStyle = def.outline || (def.color==='#ffffff' ? '#e7a7c4' : '#ffffff');
+  lines.forEach((line,i2)=> ctx.strokeText(line, cx, startY+i2*lh));
+  ctx.fillStyle = def.color;
+  lines.forEach((line,i2)=> ctx.fillText(line, cx, startY+i2*lh));
+  ctx.restore();
+
+  // 자잘한 하트 장식
+  (def.decor||[]).forEach(d=>{
+    ctx.save();
+    ctx.font = (d.size||14)+'px sans-serif';
+    ctx.fillStyle = d.color||'#ff9bd4';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(d.ch, w*d.x, h*d.y);
+    ctx.restore();
+  });
+}
 
 function buildTimestampDef(){
   const d = capturedAt || new Date();
@@ -740,6 +806,12 @@ function makeStickerCanvas(def){
   const ctx = cv.getContext('2d');
   ctx.scale(dpr,dpr);
   const w=def.w, h=def.h;
+
+  if(def.shape==='word'){
+    drawWordSticker(ctx,w,h,def);
+    return cv;
+  }
+
   ctx.save();
   switch(def.shape){
     case 'oval':
@@ -851,6 +923,17 @@ function renderStickerRow(){
       btn.className='stickerBtn';
       btn.textContent = s;
       btn.addEventListener('click', ()=> addEmojiSticker(s));
+      row.appendChild(btn);
+    });
+  } else if(stickerCategory==='word'){
+    WORD_DEFS.forEach(def=>{
+      const btn = document.createElement('button');
+      btn.className='stickerBtn';
+      const thumb = makeStickerCanvas(def);
+      const img = document.createElement('img');
+      img.src = thumb.toDataURL();
+      btn.appendChild(img);
+      btn.addEventListener('click', ()=> addBubbleSticker(def));
       row.appendChild(btn);
     });
   } else {
@@ -1302,7 +1385,7 @@ Promise.all([
   document.fonts.load('300 16px "JGaegujaengyi"'),
   document.fonts.load('500 16px "JGaegujaengyi"'),
   document.fonts.load('700 16px "JGaegujaengyi"')
-]).then(()=>{ if(stickerCategory==='bubble'){ renderStickerRow(); } }).catch(()=>{});
+]).then(()=>{ if(stickerCategory==='bubble' || stickerCategory==='word'){ renderStickerRow(); } }).catch(()=>{});
 </script>
 </body>
 </html>
