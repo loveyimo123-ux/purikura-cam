@@ -879,6 +879,7 @@ async function startCamera(facing){
     });
     video.srcObject = stream;
     video.classList.toggle('mirror', facing==='user');
+    try{ await video.play(); }catch(playErr){ /* 일부 브라우저는 autoplay 속성만으로도 재생됨 */ }
   }catch(e){
     alert('카메라 접근에 실패했어요: ' + e.message);
   }
@@ -1226,6 +1227,12 @@ function addFilmGrain(ctx, w, h, opacity){
 }
 
 function takePhoto(){
+  if(!video.videoWidth || !video.videoHeight){
+    // 카메라 스트림이 아직 첫 프레임을 받지 못한 상태(특히 일부 모바일
+    // 브라우저에서 권한 승인 직후)에서 촬영하면 빈 화면이 찍히므로 방지
+    alert('카메라가 아직 준비되지 않았어요. 잠시 후 다시 시도해주세요 ♡');
+    return;
+  }
   sizeCanvases();
   const ctx = photoCanvas.getContext('2d');
   const w = photoCanvas.width, h = photoCanvas.height;
@@ -1244,19 +1251,27 @@ function takePhoto(){
   ctx.drawImage(video, dx, dy, dw, dh);
   ctx.restore();
 
+  // 원본 프레임을 따로 떠둔다 - 아래 글로우 패스들이 매번 이 원본을 기준으로
+  // 블렌딩해야 하는데, 실수로 photoCanvas(자기 자신, 이미 블렌딩된 결과)를
+  // 계속 다시 읽어버리면 밝기가 패스마다 기하급수적으로 누적돼서
+  // 사진이 완전히 하얗게(거의 빈 화면처럼) 날아가버림
+  const original = document.createElement('canvas');
+  original.width = w; original.height = h;
+  original.getContext('2d').drawImage(photoCanvas,0,0);
+
   // soft glow / bokeh filter (뽀샤시 효과)
   ctx.save();
   ctx.globalCompositeOperation='screen';
   ctx.filter='blur(18px)';
   ctx.globalAlpha=0.5;
-  ctx.drawImage(photoCanvas,0,0);
+  ctx.drawImage(original,0,0);
   ctx.restore();
 
   ctx.save();
   ctx.globalCompositeOperation='screen';
   ctx.filter='blur(36px)';
   ctx.globalAlpha=0.3;
-  ctx.drawImage(photoCanvas,0,0);
+  ctx.drawImage(original,0,0);
   ctx.restore();
 
   ctx.save();
