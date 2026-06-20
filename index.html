@@ -573,8 +573,33 @@ const resultImg = document.getElementById('resultImg');
 
 // 미리보기(video)와 촬영본(canvas)이 항상 똑같은 보정을 받도록 단일 소스로 관리.
 // 누런 느낌 없이 밝은 부분이 더 하얗게 보이도록 밝기/대비/채도를 조정함.
-const CAMERA_FILTER = 'brightness(1.45) contrast(0.95) saturate(1.05) blur(0.5px)';
-video.style.filter = CAMERA_FILTER;
+const CAMERA_FILTER_VALUES = { brightness:1.45, contrast:0.95, saturate:1.05, blurPx:0.5 };
+const CAMERA_FILTER = `brightness(${CAMERA_FILTER_VALUES.brightness}) contrast(${CAMERA_FILTER_VALUES.contrast}) saturate(${CAMERA_FILTER_VALUES.saturate}) blur(${CAMERA_FILTER_VALUES.blurPx}px)`;
+video.style.filter = CAMERA_FILTER; // CSS filter는 항상 잘 지원되므로 라이브 미리보기는 그대로 사용
+
+// 캔버스의 ctx.filter(브라우저별 지원이 불안정, 특히 일부 iOS Safari에서
+// 조용히 무시됨)에 의존하지 않고, 촬영된 프레임에 같은 보정을 픽셀 단위로
+// 직접 적용해서 미리보기와 저장 결과가 항상 똑같이 나오도록 함
+function applyCameraColorAdjust(ctx, w, h){
+  const { brightness, contrast, saturate } = CAMERA_FILTER_VALUES;
+  const imgData = ctx.getImageData(0,0,w,h);
+  const d = imgData.data;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i], g=d[i+1], b=d[i+2];
+    r*=brightness; g*=brightness; b*=brightness;
+    r=(r-127.5)*contrast+127.5;
+    g=(g-127.5)*contrast+127.5;
+    b=(b-127.5)*contrast+127.5;
+    const luma = 0.2126*r+0.7152*g+0.0722*b;
+    r = luma+(r-luma)*saturate;
+    g = luma+(g-luma)*saturate;
+    b = luma+(b-luma)*saturate;
+    d[i]   = r<0?0:r>255?255:r;
+    d[i+1] = g<0?0:g>255?255:g;
+    d[i+2] = b<0?0:b>255?255:b;
+  }
+  ctx.putImageData(imgData,0,0);
+}
 
 let currentFacing = 'user';
 let stream = null;
@@ -1258,7 +1283,11 @@ function takePhoto(){
     ctx.translate(w,0);
     ctx.scale(-1,1);
   }
-  ctx.filter = CAMERA_FILTER;
+  // 주의: ctx.filter는 일부 모바일 브라우저(특히 구형 iOS Safari)에서
+  // 조용히 무시되어 저장된 사진이 미리보기보다 누렇고 어두운 "카메라
+  // 기본값"처럼 나오는 버그가 있었음. 그래서 원본 프레임을 필터 없이
+  // 그린 뒤, applyCameraColorAdjust()로 같은 보정을 픽셀 단위로 직접
+  // 적용한다 (브라우저 지원 여부와 무관하게 항상 동작).
   // cover-fit calculation
   const vw = video.videoWidth, vh = video.videoHeight;
   const scale = Math.max(w/vw, h/vh);
@@ -1266,6 +1295,8 @@ function takePhoto(){
   const dx = (w-dw)/2, dy=(h-dh)/2;
   ctx.drawImage(video, dx, dy, dw, dh);
   ctx.restore();
+
+  applyCameraColorAdjust(ctx, w, h);
 
   // flash effect
   flashEl.style.transition='none';
