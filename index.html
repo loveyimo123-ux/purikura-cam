@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>♡ PURIKURA CAM ♡</title>
+<title>♡ 갸루야호캠 ♡</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
@@ -492,7 +492,7 @@
         <div class="tick" style="transform:rotate(270deg) translateY(-21px);"></div>
         <div class="tick" style="transform:rotate(315deg) translateY(-21px);"></div>
       </div>
-      <div id="brand"><span class="heart">♡</span> PURIKURA CAM <span class="heart">♡</span></div>
+      <div id="brand"><span class="heart">♡</span> 갸루야호캠 <span class="heart">♡</span></div>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
       <div id="statusdot"></div>
@@ -1359,7 +1359,7 @@ function finalizeImage(){
   octx.textAlign='center';
   octx.shadowColor='#b97883';
   octx.shadowBlur=6;
-  octx.fillText('♡ PURIKURA CAM ♡', w/2, h-18);
+  octx.fillText('♡ 갸루야호캠 ♡', w/2, h-18);
   octx.restore();
 
   resultImg.src = out.toDataURL('image/png');
@@ -1379,7 +1379,7 @@ document.getElementById('decorateMoreBtn').addEventListener('click', ()=>{
 document.getElementById('downloadBtn').addEventListener('click', ()=>{
   const a = document.createElement('a');
   a.href = resultImg.src;
-  a.download = 'purikura_' + Date.now() + '.png';
+  a.download = 'gyaru_yaho_cam_' + Date.now() + '.png';
   a.click();
 });
 
