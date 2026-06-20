@@ -28,9 +28,11 @@
     height:100vh;
     max-height:932px;
     margin:0 auto;
-    background:linear-gradient(160deg,#ff8fcf,#ff5fb0 60%,#ff3f9e);
-    border-radius:38px;
-    box-shadow:0 0 0 6px #fff8fc, 0 0 0 10px var(--pink-dark), 0 20px 40px rgba(150,20,90,0.45);
+    background:
+      linear-gradient(160deg,rgba(255,255,255,0.55),rgba(255,255,255,0) 30%),
+      linear-gradient(160deg,#ffb3dd,#ff7fc1 55%,#ff4fa3 90%);
+    border-radius:30px;
+    box-shadow:0 0 0 6px #fff8fc, 0 0 0 9px #e7b9cf, 0 0 0 11px var(--pink-dark), 0 20px 40px rgba(150,20,90,0.45);
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -42,46 +44,172 @@
     position:absolute;
     color:#fff7fb;
     opacity:0.55;
-    font-size:18px;
+    font-size:16px;
     pointer-events:none;
     z-index:1;
   }
-  #app::before{ top:10px; left:14px; }
-  #app::after{ top:10px; right:14px; }
+  #app::before{ top:6px; left:10px; }
+  #app::after{ top:6px; right:10px; }
 
-  #topbar{
+  /* ---- decorative back-of-camera control cluster (Sony DSC-W130 style) ---- */
+  #camHeader{
     flex:0 0 auto;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:10px 16px 4px;
+    padding:10px 16px 6px;
     z-index:2;
+    pointer-events:none;
   }
   #brand{
     color:#fff;
     font-weight:900;
-    font-size:15px;
-    letter-spacing:1px;
+    font-size:13px;
+    letter-spacing:0.5px;
     text-shadow:0 1px 0 var(--shadow), 0 0 8px #fff;
   }
-  #brand .heart{color:#fff; font-size:13px;}
   #statusdot{
-    width:9px;height:9px;border-radius:50%;
+    width:8px;height:8px;border-radius:50%;
     background:#ff2b6b;
     box-shadow:0 0 6px #ff2b6b;
     animation:blink 1.4s infinite;
   }
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
 
+  #dialCluster{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .modeDial{
+    width:46px;height:46px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, #f0d7e6 55%, #d9b6cd 100%);
+    border:2px solid #fff;
+    box-shadow:0 2px 4px rgba(150,20,90,0.4), inset 0 0 0 1px rgba(150,20,90,0.15);
+    position:relative;
+    font-size:7px;
+    color:var(--pink-dark);
+  }
+  .modeDial .tick{
+    position:absolute; top:50%; left:50%;
+    width:2px;height:6px;
+    background:var(--pink-dark);
+    transform-origin:0 0;
+    opacity:0.55;
+  }
+  .dpadCluster{
+    width:50px;height:50px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, #f3dceb 60%, #d9b6cd 100%);
+    border:2px solid #fff;
+    box-shadow:0 2px 4px rgba(150,20,90,0.4);
+    position:relative;
+  }
+  .dpadCluster .ctrDot{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:16px;height:16px;border-radius:50%;
+    background:linear-gradient(160deg,#fff,#e3c3d8);
+    box-shadow:inset 0 0 2px rgba(150,20,90,0.5);
+  }
+  .dpadCluster .arrow{
+    position:absolute;
+    font-size:8px;
+    color:var(--pink-dark);
+    opacity:0.65;
+  }
+  .dpadCluster .arrow.up{ top:3px; left:50%; transform:translateX(-50%); }
+  .dpadCluster .arrow.down{ bottom:3px; left:50%; transform:translateX(-50%); }
+  .dpadCluster .arrow.left{ left:3px; top:50%; transform:translateY(-50%); }
+  .dpadCluster .arrow.right{ right:3px; top:50%; transform:translateY(-50%); }
+  .miniBtn{
+    width:16px;height:16px;border-radius:50%;
+    background:linear-gradient(160deg,#fff,#eccbe0);
+    box-shadow:0 1px 2px rgba(150,20,90,0.4);
+  }
+  .miniBtnRow{ display:flex; flex-direction:column; gap:5px; }
+
   #screenWrap{
     flex:1 1 auto;
-    margin:6px 14px;
-    border-radius:22px;
-    background:#000;
-    box-shadow:inset 0 0 0 5px #fff, inset 0 0 0 8px var(--pink-deep), 0 4px 10px rgba(0,0,0,0.3);
+    margin:4px 14px;
+    border-radius:14px;
+    background:#0a0a0c;
+    box-shadow:
+      inset 0 0 0 3px #1a1a1a,
+      inset 0 0 0 6px #2c2c2c,
+      0 0 0 3px #fff,
+      0 0 0 5px var(--pink-deep),
+      0 4px 10px rgba(0,0,0,0.3);
     position:relative;
     overflow:hidden;
     z-index:2;
+    padding:14px 10px 22px 22px;
+  }
+  #screenInner{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:4px;
+    overflow:hidden;
+  }
+  #brandSide{
+    position:absolute;
+    left:4px; top:50%;
+    transform:translateY(-50%) rotate(180deg);
+    writing-mode:vertical-rl;
+    color:#cfcfcf;
+    font-size:9px;
+    letter-spacing:1px;
+    font-weight:700;
+    pointer-events:none;
+    z-index:4;
+  }
+  #brandSide b{ color:#fff; font-style:italic; }
+  #sonyLogo{
+    position:absolute;
+    bottom:4px; right:14px;
+    color:#e6e6e6;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:1.5px;
+    font-style:italic;
+    pointer-events:none;
+    z-index:4;
+  }
+  .deco{
+    position:absolute;
+    pointer-events:none;
+    z-index:5;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+  }
+  #decoFav{
+    top:6px; left:6px;
+    color:#e0335f;
+    font-family:"Comic Sans MS","Segoe Script",cursive;
+    font-size:13px;
+    font-weight:700;
+    transform:rotate(-12deg);
+    text-shadow:0 0 3px #fff;
+    line-height:1.05;
+  }
+  #decoHeart1{ top:2px; right:34%; color:#ff5ec4; font-size:14px; transform:rotate(15deg); }
+  #decoHeart2{ bottom:30%; left:4px; color:#ff8fcf; font-size:12px; }
+  #decoLove{
+    bottom:6px; left:6px;
+    background:#fff3f6;
+    border:2px solid #e0335f;
+    border-radius:4px;
+    padding:2px 6px;
+    color:#e0335f;
+    font-size:9px;
+    font-weight:900;
+    line-height:1.15;
+    text-align:center;
+    transform:rotate(-3deg);
+  }
+  #decoLove .num{ font-size:7px; color:#a32a6a; display:block; }
+  #decoLips{
+    bottom:4px; right:4px;
+    font-size:30px;
+    transform:rotate(8deg);
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,0.4)) hue-rotate(310deg);
   }
   #stageArea{
     position:absolute; inset:0;
@@ -145,15 +273,6 @@
     color:#fff;
     text-shadow:0 0 20px #ff3f9e, 0 4px 0 var(--shadow);
     z-index:6;
-  }
-
-  /* lens deco top of camera (like a real purikura booth lens) */
-  #lensDeco{
-    position:absolute; top:14px; left:50%; transform:translateX(-50%);
-    width:26px; height:26px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #cdf, #335 60%, #001);
-    box-shadow:0 0 0 4px #fff, 0 0 0 6px var(--pink-deep);
-    z-index:3;
   }
 
   #toolbar{
@@ -330,23 +449,53 @@
 </head>
 <body>
 <div id="app">
-  <div id="lensDeco"></div>
-  <div id="topbar">
-    <div id="brand"><span class="heart">♡</span> PURIKURA CAM <span class="heart">♡</span></div>
-    <div id="statusdot"></div>
+  <div id="camHeader">
+    <div id="dialCluster">
+      <div class="modeDial">
+        <div class="tick" style="transform:rotate(0deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(45deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(90deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(135deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(180deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(225deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(270deg) translateY(-21px);"></div>
+        <div class="tick" style="transform:rotate(315deg) translateY(-21px);"></div>
+      </div>
+      <div id="brand"><span class="heart">♡</span> PURIKURA CAM <span class="heart">♡</span></div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div id="statusdot"></div>
+      <div class="dpadCluster">
+        <div class="ctrDot"></div>
+        <span class="arrow up">▲</span>
+        <span class="arrow down">▼</span>
+        <span class="arrow left">◀</span>
+        <span class="arrow right">▶</span>
+      </div>
+    </div>
   </div>
 
   <div id="screenWrap">
-    <div id="stageArea">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="photoCanvas"></canvas>
-      <canvas id="drawCanvas"></canvas>
-      <div id="stickerLayer"></div>
-      <div id="glossOverlay"></div>
+    <div id="screenInner">
+      <div id="stageArea">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="photoCanvas"></canvas>
+        <canvas id="drawCanvas"></canvas>
+        <div id="stickerLayer"></div>
+        <div id="glossOverlay"></div>
+      </div>
+      <div id="frameDeco"><span>キラキラ♡かわいい</span></div>
+      <div id="flash"></div>
+      <div id="countdown">3</div>
+
+      <div id="brandSide"><b>Super</b> SteadyShot &nbsp; DSC-W130</div>
+      <div id="sonyLogo">SONY</div>
+      <div class="deco" id="decoFav">Favorite<br>Person</div>
+      <div class="deco" id="decoHeart1">❤</div>
+      <div class="deco" id="decoHeart2">♡</div>
+      <div class="deco" id="decoLove">I ❤ YOU<span class="num">'20 SO SPECIAL '12 ・ LIVE LAUGH LOVE</span></div>
+      <div class="deco" id="decoLips">💋</div>
     </div>
-    <div id="frameDeco"><span>キラキラ♡かわいい</span></div>
-    <div id="flash"></div>
-    <div id="countdown">3</div>
   </div>
 
   <div id="toolbar">
