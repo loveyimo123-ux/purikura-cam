@@ -5,6 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>♡ PURIKURA CAM ♡</title>
 <style>
+  @font-face{
+    font-family:'JGaegujaengyi';
+    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/JGaegujaengyi-Light-KO.woff2') format('woff2');
+    font-weight:300;
+    font-style:normal;
+  }
+  @font-face{
+    font-family:'JGaegujaengyi';
+    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/JGaegujaengyi-Medium-KO.woff2') format('woff2');
+    font-weight:500;
+    font-style:normal;
+  }
+  @font-face{
+    font-family:'JGaegujaengyi';
+    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/JGaegujaengyi-Bold-KO.woff2') format('woff2');
+    font-weight:700;
+    font-style:normal;
+  }
   :root{
     --pink:#D8A7B1;
     --pink-deep:#c68b97;
@@ -17,7 +35,7 @@
   html,body{
     margin:0; padding:0; height:100%;
     background:linear-gradient(135deg,#f6e9eb,#e9cdd2 40%,#D8A7B1);
-    font-family:"Segoe UI","Hiragino Maru Gothic Pro","Comic Sans MS",sans-serif;
+    font-family:"JGaegujaengyi","Segoe UI",sans-serif;
     overflow:hidden;
     touch-action:none;
   }
@@ -182,7 +200,7 @@
   #decoFav{
     top:6px; left:6px;
     color:var(--pink-dark);
-    font-family:"Comic Sans MS","Segoe Script",cursive;
+    font-family:"JGaegujaengyi","Comic Sans MS",cursive;
     font-size:13px;
     font-weight:700;
     transform:rotate(-12deg);
@@ -743,7 +761,7 @@ function makeStickerCanvas(def){
   ctx.restore();
 
   ctx.fillStyle = def.color || '#333';
-  ctx.font = `bold ${def.fontSize||16}px "Malgun Gothic","Apple SD Gothic Neo",sans-serif`;
+  ctx.font = `${def.fontSize||16}px "JGaegujaengyi","Malgun Gothic",sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const lines = def.text.split('\n');
@@ -1108,7 +1126,7 @@ function finalizeImage(){
 
   // bottom caption deco
   octx.save();
-  octx.font = 'bold '+(Math.round(w*0.045))+'px sans-serif';
+  octx.font = (Math.round(w*0.045))+'px "JGaegujaengyi",sans-serif';
   octx.fillStyle='rgba(255,255,255,0.85)';
   octx.textAlign='center';
   octx.shadowColor='#b97883';
@@ -1152,6 +1170,14 @@ buildStickerRow();
 sizeCanvases();
 updateControlsForCaptured();
 startCamera(currentFacing);
+
+// 폰트가 늦게 로드되면 말풍선 스티커 캔버스가 기본 글꼴로 그려지므로,
+// 웹폰트 로드가 끝나면 말풍선 썸네일을 다시 그려준다
+Promise.all([
+  document.fonts.load('300 16px "JGaegujaengyi"'),
+  document.fonts.load('500 16px "JGaegujaengyi"'),
+  document.fonts.load('700 16px "JGaegujaengyi"')
+]).then(()=>{ if(stickerCategory==='bubble'){ renderStickerRow(); } }).catch(()=>{});
 </script>
 </body>
 </html>
